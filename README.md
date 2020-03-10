@@ -2,8 +2,8 @@
 
 A Simple Retrofit, Scarlet Inspired Android Websocket Client
 
-[![](https://jitpack.io/v/ibrahimsn98/Achilles.svg)](https://jitpack.io/#ibrahimsn98/Achilles)
-[![API](https://img.shields.io/badge/API-16%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=22)
+[![](https://jitpack.io/v/ibrahimsn98/achilles.svg)](https://jitpack.io/#ibrahimsn98/achilles)
+[![API](https://img.shields.io/badge/API-22%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=22)
 
 ## Motivation
 I have created this library to communicate my apps with my own backend. All receiver and send methods require to specify event name, so both client and server applications distinguish the right payload.
@@ -69,7 +69,7 @@ allprojects {
 }
 
 dependencies {
-        implementation 'com.github.ibrahimsn98:Achilles:1.0'
+    implementation 'com.github.ibrahimsn98:achilles:1.0'
 }
 ```
 
