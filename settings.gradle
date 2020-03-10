@@ -1,0 +1,3 @@
+rootProject.name='achilles'
+include ':app'
+include ':achilleslib'
