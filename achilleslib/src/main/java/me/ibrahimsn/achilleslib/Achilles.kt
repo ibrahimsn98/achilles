@@ -10,7 +10,10 @@ import me.ibrahimsn.achilleslib.annotation.SendEvent
 import me.ibrahimsn.achilleslib.exception.InvalidAnnotationException
 import me.ibrahimsn.achilleslib.exception.InvalidReturnTypeException
 import me.ibrahimsn.achilleslib.util.Constants
-import okhttp3.*
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.WebSocket
+import okhttp3.WebSocketListener
 import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Proxy
