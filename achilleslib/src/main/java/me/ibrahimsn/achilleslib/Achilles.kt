@@ -63,7 +63,8 @@ class Achilles internal constructor(baseUrl: String, client: OkHttpClient,
     }
 
     private fun encodePayload(payload: Map<String, Any>): String {
-        return Base64.encodeToString(payload.toString().toByteArray(), Base64.DEFAULT)
+        val jsonPayload = Gson().toJson(payload)
+        return Base64.encodeToString(jsonPayload.toByteArray(), Base64.DEFAULT)
     }
 
     @Throws(InvalidReturnTypeException::class)
