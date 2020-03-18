@@ -16,6 +16,10 @@ I have created this library to communicate the apps with their own backends. All
 ```
 {"event": "echo", "data": {"name": "Mark", "surname": "Bond"}}
 ```
+-   Data sent (Encoded payload)
+```
+{"event": "echo", "data": "eyJuYW1lIjogIk1hcmsiLCAic3VybmFtZSI6ICJCb25kIn0="}
+```
 -   Data received
 ```
 {"event": "echo", "data": {"name": "Mark", "surname": "Bond"}}
@@ -41,6 +45,7 @@ interface SocketService {
     val achilles = Achilles.Builder()
         .baseUrl("wss://echo.websocket.org")
         .client(OkHttpClient().newBuilder().build())
+        .encodePayload(true)
         .build()
 
     val service = achilles.create(SocketService::class.java)
@@ -71,7 +76,7 @@ allprojects {
 }
 
 dependencies {
-    implementation 'com.github.ibrahimsn98:achilles:1.0'
+    implementation 'com.github.ibrahimsn98:achilles:1.1'
 }
 ```
 
