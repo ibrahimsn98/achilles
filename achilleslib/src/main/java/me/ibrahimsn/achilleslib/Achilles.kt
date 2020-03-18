@@ -1,6 +1,7 @@
 package me.ibrahimsn.achilleslib
 
 import android.util.Base64
+import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.JsonParser
 import io.reactivex.Observable
@@ -20,7 +21,8 @@ import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Proxy
 
 class Achilles internal constructor(baseUrl: String, client: OkHttpClient,
-                                    private val encodePayload: Boolean): WebSocketListener() {
+                                    private val encodePayload: Boolean,
+                                    private val logTraffic: Boolean): WebSocketListener() {
 
     private val socket: WebSocket
     private val distributor = BehaviorSubject.create<Receiver>()
@@ -50,16 +52,21 @@ class Achilles internal constructor(baseUrl: String, client: OkHttpClient,
     }
 
     private fun invokeSendMethod(ann: SendEvent, method: Method, args: Array<out Any>): Boolean {
-        val payload = mutableMapOf<String, Any>()
+        val data = mutableMapOf<String, Any>()
 
         for ((i, par) in method.parameterAnnotations.withIndex()) {
             if (par[0] is Field) {
-                payload[(par[0] as Field).value] = args[i]
+                data[(par[0] as Field).value] = args[i]
             }
         }
 
-        return socket.send(Gson().toJson(mapOf(Constants.ATTR_EVENT to ann.value,
-            Constants.ATTR_DATA to if (encodePayload) encodePayload(payload) else payload)))
+        val payload = Gson().toJson(mapOf(Constants.ATTR_EVENT to ann.value,
+            Constants.ATTR_DATA to if (encodePayload) encodePayload(data) else data))
+
+        if (logTraffic)
+            Log.d(Constants.LOG_TAG, "Sent: $payload")
+
+        return socket.send(payload)
     }
 
     private fun encodePayload(payload: Map<String, Any>): String {
@@ -86,6 +93,9 @@ class Achilles internal constructor(baseUrl: String, client: OkHttpClient,
         super.onMessage(webSocket, text)
         val json = JsonParser.parseString(text).asJsonObject
 
+        if (logTraffic)
+            Log.d(Constants.LOG_TAG, "Received: $json")
+
         if (json.has(Constants.ATTR_EVENT) && json.has(Constants.ATTR_DATA))
             distributor.onNext(Gson().fromJson(json, Receiver::class.java))
     }
@@ -94,6 +104,7 @@ class Achilles internal constructor(baseUrl: String, client: OkHttpClient,
         private var baseUrl = Constants.TEST_URL
         private var client: OkHttpClient = OkHttpClient().newBuilder().build()
         private var encodePayload = false
+        private var logTraffic = false
 
         fun baseUrl(baseUrl: String): Builder {
             this.baseUrl = baseUrl
@@ -110,6 +121,11 @@ class Achilles internal constructor(baseUrl: String, client: OkHttpClient,
             return this
         }
 
-        fun build() = Achilles(baseUrl, client, encodePayload)
+        fun logTraffic(logTraffic: Boolean): Builder {
+            this.logTraffic = logTraffic
+            return this
+        }
+
+        fun build() = Achilles(baseUrl, client, encodePayload, logTraffic)
     }
 }

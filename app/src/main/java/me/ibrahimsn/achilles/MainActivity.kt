@@ -20,7 +20,7 @@ class MainActivity : AppCompatActivity() {
         val achilles = Achilles.Builder()
             .baseUrl("wss://echo.websocket.org")
             .client(OkHttpClient().newBuilder().build())
-            .encodePayload(true)
+            .logTraffic(true)
             .build()
 
         val service = achilles.create(SocketService::class.java)

@@ -46,6 +46,7 @@ interface SocketService {
         .baseUrl("wss://echo.websocket.org")
         .client(OkHttpClient().newBuilder().build())
         .encodePayload(true)
+        .logTraffic(true)
         .build()
 
     val service = achilles.create(SocketService::class.java)
@@ -76,7 +77,7 @@ allprojects {
 }
 
 dependencies {
-    implementation 'com.github.ibrahimsn98:achilles:1.2'
+    implementation 'com.github.ibrahimsn98:achilles:1.3'
 }
 ```
 
