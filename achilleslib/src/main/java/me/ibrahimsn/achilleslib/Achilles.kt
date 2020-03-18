@@ -1,5 +1,6 @@
 package me.ibrahimsn.achilleslib
 
+import android.util.Base64
 import com.google.gson.Gson
 import com.google.gson.JsonParser
 import io.reactivex.Observable
@@ -18,7 +19,8 @@ import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Proxy
 
-class Achilles internal constructor(baseUrl: String, client: OkHttpClient): WebSocketListener() {
+class Achilles internal constructor(baseUrl: String, client: OkHttpClient,
+                                    private val encodePayload: Boolean): WebSocketListener() {
 
     private val socket: WebSocket
     private val distributor = BehaviorSubject.create<Receiver>()
@@ -57,7 +59,11 @@ class Achilles internal constructor(baseUrl: String, client: OkHttpClient): WebS
         }
 
         return socket.send(Gson().toJson(mapOf(Constants.ATTR_EVENT to ann.value,
-            Constants.ATTR_DATA to payload)))
+            Constants.ATTR_DATA to if (encodePayload) encodePayload(payload) else payload)))
+    }
+
+    private fun encodePayload(payload: Map<String, Any>): String {
+        return Base64.encodeToString(payload.toString().toByteArray(), Base64.DEFAULT)
     }
 
     @Throws(InvalidReturnTypeException::class)
@@ -86,6 +92,7 @@ class Achilles internal constructor(baseUrl: String, client: OkHttpClient): WebS
     class Builder {
         private var baseUrl = Constants.TEST_URL
         private var client: OkHttpClient = OkHttpClient().newBuilder().build()
+        private var encodePayload = false
 
         fun baseUrl(baseUrl: String): Builder {
             this.baseUrl = baseUrl
@@ -97,6 +104,11 @@ class Achilles internal constructor(baseUrl: String, client: OkHttpClient): WebS
             return this
         }
 
-        fun build() = Achilles(baseUrl, client)
+        fun encodePayload(encodePayload: Boolean): Builder {
+            this.encodePayload = encodePayload
+            return this
+        }
+
+        fun build() = Achilles(baseUrl, client, encodePayload)
     }
 }
