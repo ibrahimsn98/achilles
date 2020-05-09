@@ -32,38 +32,37 @@ I have created this library to communicate the apps with their own backends. All
 interface SocketService {
 
     @SendEvent("echo")
-    fun sendEcho(@Field("name") name: String,
-                 @Field("surname") surname: String)
+    fun sendEcho(
+        @Field("name") name: String,
+        @Field("surname") surname: String
+    )
 
     @ReceiveEvent("echo")
-    fun receiveEcho(): Observable<Response>
+    suspend fun receiveEcho(): Flow<Response>
 }
 ```
 
 -   Use Achilles to create an implementation:
 ```kotlin
-    val achilles = Achilles.Builder()
-        .baseUrl("wss://echo.websocket.org")
-        .client(OkHttpClient().newBuilder().build())
-        .encodePayload(true)
-        .logTraffic(true)
-        .build()
+val achilles = Achilles.Builder()
+    .baseUrl("wss://echo.websocket.org")
+    .client(OkHttpClient().newBuilder().build())
+    .encodePayload(true)
+    .logTraffic(true)
+    .build()
 
-    val service = achilles.create(SocketService::class.java)
+val service = achilles.create(SocketService::class.java)
 ```
 
 -   Send and observe socket event data
 ```kotlin
-    disposable.add(service.receiveEcho()
-        .subscribeOn(Schedulers.io())
-        .observeOn(AndroidSchedulers.mainThread())
-        .subscribe({
-            // TODO
-        }, {
-            // Handle error
-        }))
+CoroutineScope(IO).launch {
+    service.receiveEcho().onEach {
+        Log.d("MainActivity", "Response: $it")
+    }
 
-    service.sendEcho("Mark", "Bond")
+    service.sendEcho("Name", "Surname")
+}
 ```
 
 
