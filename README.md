@@ -77,7 +77,7 @@ allprojects {
 }
 
 dependencies {
-    implementation 'com.github.ibrahimsn98:achilles:1.3'
+    implementation 'com.github.ibrahimsn98:achilles:1.4'
 }
 ```
 
