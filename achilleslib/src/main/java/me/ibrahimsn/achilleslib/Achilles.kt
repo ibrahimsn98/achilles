@@ -4,8 +4,13 @@ import android.util.Base64
 import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.JsonParser
-import io.reactivex.Observable
-import io.reactivex.subjects.BehaviorSubject
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 import me.ibrahimsn.achilleslib.annotation.Field
 import me.ibrahimsn.achilleslib.annotation.ReceiveEvent
 import me.ibrahimsn.achilleslib.annotation.SendEvent
@@ -20,12 +25,17 @@ import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Proxy
 
-class Achilles internal constructor(baseUrl: String, client: OkHttpClient,
-                                    private val encodePayload: Boolean,
-                                    private val logTraffic: Boolean): WebSocketListener() {
+class Achilles internal constructor(
+    baseUrl: String,
+    client: OkHttpClient,
+    private val encodePayload: Boolean,
+    private val logTraffic: Boolean
+): WebSocketListener() {
 
     private val socket: WebSocket
-    private val distributor = BehaviorSubject.create<Receiver>()
+
+    @ExperimentalCoroutinesApi
+    private val distributor = ConflatedBroadcastChannel<Receiver>()
 
     init {
         val request = Request.Builder().url(baseUrl).build()
@@ -33,25 +43,30 @@ class Achilles internal constructor(baseUrl: String, client: OkHttpClient,
         client.dispatcher.executorService.shutdown()
     }
 
+    @FlowPreview
+    @ExperimentalCoroutinesApi
     @Throws(InvalidAnnotationException::class, InvalidReturnTypeException::class)
     fun <T> create(serviceInterface: Class<T>): T {
-        return serviceInterface.cast(Proxy.newProxyInstance(serviceInterface.classLoader, arrayOf(serviceInterface)
-        ) { _, method, args ->
-            when {
-                method.isAnnotationPresent(SendEvent::class.java) -> {
-                    val ann = method.getAnnotation(SendEvent::class.java)
-                    invokeSendMethod(ann, method, args)
+        return serviceInterface.cast(
+            Proxy.newProxyInstance(
+                serviceInterface.classLoader, arrayOf(serviceInterface)
+            ) { _, method, args ->
+                when {
+                    method.isAnnotationPresent(SendEvent::class.java) -> {
+                        val ann = method.getAnnotation(SendEvent::class.java)
+                        return@newProxyInstance invokeSendMethod(ann, method, args)
+                    }
+                    method.isAnnotationPresent(ReceiveEvent::class.java) -> {
+                        val ann = method.getAnnotation(ReceiveEvent::class.java)
+                        return@newProxyInstance invokeReceiverMethod(ann, method)
+                    }
+                    else -> throw InvalidAnnotationException("Only SendEvent and ReceiveEvent are allowed.")
                 }
-                method.isAnnotationPresent(ReceiveEvent::class.java) -> {
-                    val ann = method.getAnnotation(ReceiveEvent::class.java)
-                    invokeReceiverMethod(ann, method)
-                }
-                else -> throw InvalidAnnotationException("Only SendEvent and ReceiveEvent are allowed.")
             }
-        })!!
+        )!!
     }
 
-    private fun invokeSendMethod(ann: SendEvent, method: Method, args: Array<out Any>): Boolean {
+    private fun invokeSendMethod(ann: SendEvent?, method: Method, args: Array<out Any>) {
         val data = mutableMapOf<String, Any>()
 
         for ((i, par) in method.parameterAnnotations.withIndex()) {
@@ -60,13 +75,16 @@ class Achilles internal constructor(baseUrl: String, client: OkHttpClient,
             }
         }
 
-        val payload = Gson().toJson(mapOf(Constants.ATTR_EVENT to ann.value,
-            Constants.ATTR_DATA to if (encodePayload) encodePayload(data) else data))
+        val payload = Gson().toJson(mapOf(
+            Constants.ATTR_EVENT to ann?.value,
+            Constants.ATTR_DATA to if (encodePayload) encodePayload(data) else data
+        ))
 
-        if (logTraffic)
+        if (logTraffic) {
             Log.d(Constants.LOG_TAG, "Sent: $payload")
+        }
 
-        return socket.send(payload)
+        socket.send(payload)
     }
 
     private fun encodePayload(payload: Map<String, Any>): String {
@@ -74,30 +92,31 @@ class Achilles internal constructor(baseUrl: String, client: OkHttpClient,
         return Base64.encodeToString(jsonPayload.toByteArray(), Base64.DEFAULT)
     }
 
+    @FlowPreview
+    @ExperimentalCoroutinesApi
     @Throws(InvalidReturnTypeException::class)
-    private fun invokeReceiverMethod(ann: ReceiveEvent, method: Method): Any {
-        if (method.returnType != Observable::class.java)
-            throw InvalidReturnTypeException("Only observable return type is allowed.")
-
+    private fun invokeReceiverMethod(ann: ReceiveEvent?, method: Method): Flow<Any> {
         return distributor
-            .filter { it.event == ann.value }
+            .asFlow().filter { it.event == ann?.value }
             .map {
                 val json = JsonParser.parseString(it.data.toString()).asJsonObject
-
                 val typeArg = (method.genericReturnType as ParameterizedType).actualTypeArguments[0]
                 Gson().fromJson(json, typeArg as Class<*>)
             }
     }
 
+    @ExperimentalCoroutinesApi
     override fun onMessage(webSocket: WebSocket, text: String) {
         super.onMessage(webSocket, text)
         val json = JsonParser.parseString(text).asJsonObject
 
-        if (logTraffic)
+        if (logTraffic) {
             Log.d(Constants.LOG_TAG, "Received: $json")
+        }
 
-        if (json.has(Constants.ATTR_EVENT) && json.has(Constants.ATTR_DATA))
-            distributor.onNext(Gson().fromJson(json, Receiver::class.java))
+        if (json.has(Constants.ATTR_EVENT) && json.has(Constants.ATTR_DATA)) {
+            distributor.offer(Gson().fromJson(json, Receiver::class.java))
+        }
     }
 
     class Builder {
@@ -126,6 +145,11 @@ class Achilles internal constructor(baseUrl: String, client: OkHttpClient,
             return this
         }
 
-        fun build() = Achilles(baseUrl, client, encodePayload, logTraffic)
+        fun build() = Achilles(
+            baseUrl,
+            client,
+            encodePayload,
+            logTraffic
+        )
     }
 }
