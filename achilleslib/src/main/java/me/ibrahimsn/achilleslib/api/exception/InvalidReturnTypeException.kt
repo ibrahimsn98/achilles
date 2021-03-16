@@ -1,4 +1,4 @@
-package me.ibrahimsn.achilleslib.exception
+package me.ibrahimsn.achilleslib.api.exception
 
 class InvalidReturnTypeException(
     override val message: String

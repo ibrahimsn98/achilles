@@ -5,18 +5,17 @@ import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.JsonParser
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
-import me.ibrahimsn.achilleslib.annotation.Field
-import me.ibrahimsn.achilleslib.annotation.ReceiveEvent
-import me.ibrahimsn.achilleslib.annotation.SendEvent
-import me.ibrahimsn.achilleslib.exception.InvalidAnnotationException
-import me.ibrahimsn.achilleslib.exception.InvalidReturnTypeException
-import me.ibrahimsn.achilleslib.util.Constants
+import me.ibrahimsn.achilleslib.api.annotation.Field
+import me.ibrahimsn.achilleslib.api.annotation.ReceiveEvent
+import me.ibrahimsn.achilleslib.api.annotation.SendEvent
+import me.ibrahimsn.achilleslib.api.exception.InvalidAnnotationException
+import me.ibrahimsn.achilleslib.api.exception.InvalidReturnTypeException
+import me.ibrahimsn.achilleslib.internal.Constants
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.WebSocket
@@ -43,8 +42,6 @@ class Achilles internal constructor(
         client.dispatcher.executorService.shutdown()
     }
 
-    @FlowPreview
-    @ExperimentalCoroutinesApi
     @Throws(InvalidAnnotationException::class, InvalidReturnTypeException::class)
     fun <T> create(serviceInterface: Class<T>): T {
         return serviceInterface.cast(
@@ -92,8 +89,6 @@ class Achilles internal constructor(
         return Base64.encodeToString(jsonPayload.toByteArray(), Base64.DEFAULT)
     }
 
-    @FlowPreview
-    @ExperimentalCoroutinesApi
     @Throws(InvalidReturnTypeException::class)
     private fun invokeReceiverMethod(ann: ReceiveEvent?, method: Method): Flow<Any> {
         return distributor
@@ -105,7 +100,6 @@ class Achilles internal constructor(
             }
     }
 
-    @ExperimentalCoroutinesApi
     override fun onMessage(webSocket: WebSocket, text: String) {
         super.onMessage(webSocket, text)
         val json = JsonParser.parseString(text).asJsonObject

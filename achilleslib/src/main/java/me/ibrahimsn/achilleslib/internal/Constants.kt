@@ -1,6 +1,6 @@
-package me.ibrahimsn.achilleslib.util
+package me.ibrahimsn.achilleslib.internal
 
-object Constants {
+internal object Constants {
 
     const val ATTR_EVENT = "event"
     const val ATTR_DATA = "data"

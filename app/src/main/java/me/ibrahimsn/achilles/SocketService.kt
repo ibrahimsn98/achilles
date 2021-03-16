@@ -1,9 +1,9 @@
 package me.ibrahimsn.achilles
 
 import kotlinx.coroutines.flow.Flow
-import me.ibrahimsn.achilleslib.annotation.Field
-import me.ibrahimsn.achilleslib.annotation.ReceiveEvent
-import me.ibrahimsn.achilleslib.annotation.SendEvent
+import me.ibrahimsn.achilleslib.api.annotation.Field
+import me.ibrahimsn.achilleslib.api.annotation.ReceiveEvent
+import me.ibrahimsn.achilleslib.api.annotation.SendEvent
 
 interface SocketService {
 
