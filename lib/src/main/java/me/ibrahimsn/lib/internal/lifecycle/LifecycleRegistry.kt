@@ -5,33 +5,33 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 
 class LifecycleRegistry internal constructor(
-    private val flow: MutableSharedFlow<Lifecycle.State>,
+    private val inChannel: Channel<Lifecycle.State>,
+    private val outFlow: MutableStateFlow<Lifecycle.State>,
     private val debounceMillis: Long
-) : Lifecycle by LifecycleFlow(flow), Registry {
+) : Lifecycle by LifecycleFlow(outFlow), Registry {
 
     private val job = SupervisorJob()
 
     private val registryScope = CoroutineScope(job + Dispatchers.IO)
 
-    private val registryChannel = Channel<Lifecycle.State>()
-
     constructor(debounceMillis: Long = 0L) : this(
-        MutableSharedFlow(),
+        Channel<Lifecycle.State>(Channel.CONFLATED),
+        MutableStateFlow(Lifecycle.State.Started),
         debounceMillis
     )
 
     init {
         registryScope.launch {
-            registryChannel
+            inChannel
                 .consumeAsFlow()
                 .debounce(debounceMillis)
                 .distinctUntilChanged(Lifecycle.State::isEquivalentTo)
                 .collect {
                     if (it is Lifecycle.State.Destroyed) {
-                        registryChannel.close()
+                        inChannel.close()
                         registryScope.cancel()
                     } else {
-                        flow.emit(it)
+                        outFlow.emit(it)
                     }
                 }
         }
@@ -39,7 +39,7 @@ class LifecycleRegistry internal constructor(
 
     override fun process(state: Lifecycle.State) {
         registryScope.launch {
-            registryChannel.offer(state)
+            inChannel.offer(state)
         }
     }
 }

@@ -4,7 +4,10 @@ internal fun Lifecycle.State.combine(other: Lifecycle.State): Lifecycle.State {
     if (this.isStoppedAndAborted() || other.isStoppedAndAborted()) {
         return Lifecycle.State.Stopped.AndAborted
     }
-    if (this.isStopped() || other.isStopped()) {
+    if (this.isStopped()) {
+        return this
+    }
+    if (other.isStopped()) {
         return other
     }
     return Lifecycle.State.Started

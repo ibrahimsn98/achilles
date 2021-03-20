@@ -5,7 +5,7 @@ import android.app.Application
 import android.os.Bundle
 import me.ibrahimsn.lib.internal.core.ShutdownReason
 
-class ApplicationResumedLifecycle(
+class ApplicationLifecycle(
     application: Application,
     private val lifecycleRegistry: LifecycleRegistry = LifecycleRegistry()
 ) : Lifecycle by lifecycleRegistry {

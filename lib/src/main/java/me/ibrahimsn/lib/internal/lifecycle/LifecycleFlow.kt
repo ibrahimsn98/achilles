@@ -7,13 +7,9 @@ class LifecycleFlow(
     private val flow: Flow<Lifecycle.State>
 ) : Lifecycle, Flow<Lifecycle.State> by flow {
 
-    override fun combineWith(vararg others: Lifecycle): Lifecycle {
-        var combined: Flow<Lifecycle.State> = this
-        others.forEach {
-            combined = combined.combine(it) { first, second ->
-                first.combine(second)
-            }
-        }
-        return LifecycleFlow(combined)
+    override fun combineWith(other: Lifecycle): Lifecycle {
+        return LifecycleFlow(this.combine(other) { first, second ->
+            first.combine(second)
+        })
     }
 }

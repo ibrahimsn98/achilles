@@ -1,6 +1,6 @@
 package me.ibrahimsn.lib.internal.lifecycle
 
-internal class DefaultLifecycle(
+class DefaultLifecycle(
     private val lifecycleRegistry: LifecycleRegistry = LifecycleRegistry()
 ) : Lifecycle by lifecycleRegistry {
 

@@ -5,7 +5,7 @@ import me.ibrahimsn.lib.internal.core.ShutdownReason
 
 interface Lifecycle : Flow<Lifecycle.State> {
 
-    fun combineWith(vararg others: Lifecycle): Lifecycle
+    fun combineWith(other: Lifecycle): Lifecycle
 
     sealed class State {
 

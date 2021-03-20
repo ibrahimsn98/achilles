@@ -4,24 +4,22 @@ import android.app.Application
 import android.util.Log
 import android.widget.Toast
 import kotlinx.coroutines.*
-import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.flow.collect
-import me.ibrahimsn.lib.internal.lifecycle.ApplicationResumedLifecycle
+import me.ibrahimsn.lib.internal.lifecycle.ApplicationLifecycle
 import me.ibrahimsn.lib.internal.lifecycle.ConnectivityLifecycle
-import okhttp3.Dispatcher
+import me.ibrahimsn.lib.internal.lifecycle.DefaultLifecycle
 
 class DefaultApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
 
-        val l = ApplicationResumedLifecycle(this)
+        val a = DefaultLifecycle()
+        val l = ApplicationLifecycle(this)
         val s = ConnectivityLifecycle(this)
 
         GlobalScope.launch {
-            val lifeCycles =
-
-            s.combineWith(l).collect {
+            l.combineWith(a).combineWith(s).collect {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(this@DefaultApp, "connectivity: $it", Toast.LENGTH_SHORT).show()
                 }
