@@ -3,9 +3,6 @@ package me.ibrahimsn.lib.internal.lifecycle
 import android.app.Activity
 import android.app.Application
 import android.os.Bundle
-import android.util.Log
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import me.ibrahimsn.lib.internal.core.ShutdownReason
 
 class ApplicationResumedLifecycle(
@@ -20,26 +17,15 @@ class ApplicationResumedLifecycle(
     private inner class ActivityLifecycleCallbacks : Application.ActivityLifecycleCallbacks {
 
         override fun onActivityPaused(activity: Activity) {
-            GlobalScope.launch {
-                lifecycleRegistry.emit(
-                    Lifecycle.State.Stopped.WithReason(
-                        ShutdownReason(1000, "App is paused")
-                    )
-                )
-            }
-
-            val s = lifecycleRegistry.tryEmit(
+            lifecycleRegistry.process(
                 Lifecycle.State.Stopped.WithReason(
                     ShutdownReason(1000, "App is paused")
                 )
             )
-
-            Log.d("###", "sadasdsa1: $s")
         }
 
         override fun onActivityResumed(activity: Activity) {
-            Log.d("###", "sadasdsa2")
-            lifecycleRegistry.tryEmit(Lifecycle.State.Started)
+            lifecycleRegistry.process(Lifecycle.State.Started)
         }
 
         override fun onActivityStarted(activity: Activity) {}

@@ -1,9 +1,9 @@
 package me.ibrahimsn.lib.internal.lifecycle
 
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.Flow
 import me.ibrahimsn.lib.internal.core.ShutdownReason
 
-interface Lifecycle : MutableSharedFlow<Lifecycle.State> {
+interface Lifecycle : Flow<Lifecycle.State> {
 
     fun combineWith(vararg others: Lifecycle): Lifecycle
 

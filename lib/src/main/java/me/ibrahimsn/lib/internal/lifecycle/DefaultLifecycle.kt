@@ -5,6 +5,6 @@ internal class DefaultLifecycle(
 ) : Lifecycle by lifecycleRegistry {
 
     init {
-        lifecycleRegistry.tryEmit(Lifecycle.State.Started)
+        lifecycleRegistry.process(Lifecycle.State.Started)
     }
 }

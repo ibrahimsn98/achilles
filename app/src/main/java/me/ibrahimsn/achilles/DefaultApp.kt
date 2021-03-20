@@ -2,13 +2,12 @@ package me.ibrahimsn.achilles
 
 import android.app.Application
 import android.util.Log
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import android.widget.Toast
+import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 import me.ibrahimsn.lib.internal.lifecycle.ApplicationResumedLifecycle
+import me.ibrahimsn.lib.internal.lifecycle.ConnectivityLifecycle
 import okhttp3.Dispatcher
 
 class DefaultApp : Application() {
@@ -17,10 +16,16 @@ class DefaultApp : Application() {
         super.onCreate()
 
         val l = ApplicationResumedLifecycle(this)
+        val s = ConnectivityLifecycle(this)
 
         GlobalScope.launch {
-            l.collect {
-                Log.d("###", "sfds: $it")
+            val lifeCycles =
+
+            s.combineWith(l).collect {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@DefaultApp, "connectivity: $it", Toast.LENGTH_SHORT).show()
+                }
+                Log.d("###", "lifecycle: $it")
             }
         }
     }
