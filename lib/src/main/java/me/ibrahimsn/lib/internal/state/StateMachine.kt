@@ -7,11 +7,11 @@ import kotlinx.coroutines.launch
 import me.ibrahimsn.lib.internal.state.observer.StateObserver
 import kotlin.coroutines.CoroutineContext
 
-class StateMachine<A : Action, S : State> (
+class StateMachine<E : Event, S : State> (
     private val initialState: S,
     private val scope: CoroutineScope,
     private val dispatcher: CoroutineContext = Dispatchers.Default,
-    private val reducer: (action: A, state: S) -> Unit
+    private val reducer: (event: E, state: S) -> Unit
 ) {
 
     private val stateFlow by lazy {
@@ -28,9 +28,9 @@ class StateMachine<A : Action, S : State> (
     infix fun observeState(observer: StateObserver<S>) =
         observer.observe(stateFlow)
 
-    infix fun emit(action: A) {
+    infix fun emit(event: E) {
         scope.launch(dispatcher) {
-            reducer(action, currentState)
+            reducer(event, currentState)
         }
     }
 }
