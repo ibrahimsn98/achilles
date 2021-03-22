@@ -21,9 +21,9 @@ class DefaultApp : Application() {
         GlobalScope.launch {
             l.combineWith(a).combineWith(s).collect {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@DefaultApp, "connectivity: $it", Toast.LENGTH_SHORT).show()
+                  //  Toast.makeText(this@DefaultApp, "connectivity: $it", Toast.LENGTH_SHORT).show()
                 }
-                Log.d("###", "lifecycle: $it")
+                //Log.d("###", "lifecycle: $it")
             }
         }
     }

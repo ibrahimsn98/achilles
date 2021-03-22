@@ -5,6 +5,7 @@ import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.JsonParser
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
@@ -16,6 +17,10 @@ import me.ibrahimsn.lib.api.annotation.SendEvent
 import me.ibrahimsn.lib.api.exception.InvalidAnnotationException
 import me.ibrahimsn.lib.api.exception.InvalidReturnTypeException
 import me.ibrahimsn.lib.internal.Constants
+import me.ibrahimsn.lib.internal.connection.Connection
+import me.ibrahimsn.lib.internal.lifecycle.DefaultLifecycle
+import me.ibrahimsn.lib.internal.retry.BackoffStrategy
+import me.ibrahimsn.lib.internal.retry.LinearBackoffStrategy
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.WebSocket
@@ -37,6 +42,13 @@ class Achilles internal constructor(
     private val distributor = ConflatedBroadcastChannel<Receiver>()
 
     init {
+        val c = Connection.Factory(
+            DefaultLifecycle(),
+            GlobalScope,
+            me.ibrahimsn.lib.internal.WebSocket.Factory,
+            LinearBackoffStrategy()
+        ).create()
+
         val request = Request.Builder().url(baseUrl).build()
         socket = client.newWebSocket(request, this)
         client.dispatcher.executorService.shutdown()

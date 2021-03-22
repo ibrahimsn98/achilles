@@ -1,7 +1,10 @@
 package me.ibrahimsn.lib.internal.connection
 
+import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import me.ibrahimsn.lib.internal.WebSocket
 import me.ibrahimsn.lib.internal.lifecycle.Lifecycle
 import me.ibrahimsn.lib.internal.retry.BackoffStrategy
@@ -21,9 +24,7 @@ internal class Connection(
     ) { event, state ->
         when (state) {
             is ConnectionState.Disconnected -> {
-                when (event) {
-                    is
-                }
+
             }
             is ConnectionState.WaitingToRetry -> {
 
@@ -39,6 +40,14 @@ internal class Connection(
             }
             is ConnectionState.Destroyed -> {
 
+            }
+        }
+    }
+
+    init {
+        scope.launch {
+            lifecycle.collect {
+                Log.d("###", "lifecycle: $it")
             }
         }
     }
