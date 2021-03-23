@@ -19,11 +19,13 @@ import me.ibrahimsn.lib.api.exception.InvalidReturnTypeException
 import me.ibrahimsn.lib.internal.Constants
 import me.ibrahimsn.lib.internal.connection.Connection
 import me.ibrahimsn.lib.internal.lifecycle.DefaultLifecycle
+import me.ibrahimsn.lib.internal.lifecycle.Lifecycle
 import me.ibrahimsn.lib.internal.retry.BackoffStrategy
+import me.ibrahimsn.lib.internal.retry.ExponentialBackoffStrategy
 import me.ibrahimsn.lib.internal.retry.LinearBackoffStrategy
+import me.ibrahimsn.lib.internal.webSocket.WebSocket
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
@@ -45,9 +47,11 @@ class Achilles internal constructor(
         val c = Connection.Factory(
             DefaultLifecycle(),
             GlobalScope,
-            me.ibrahimsn.lib.internal.WebSocket.Factory,
+            WebSocket.Factory,
             LinearBackoffStrategy()
         ).create()
+
+        c.
 
         val request = Request.Builder().url(baseUrl).build()
         socket = client.newWebSocket(request, this)
@@ -126,10 +130,22 @@ class Achilles internal constructor(
     }
 
     class Builder {
+        private var webSocketFactory: WebSocket.Factory? = null
+        private var lifecycle: Lifecycle = DEFAULT_LIFECYCLE
+        private var backoffStrategy: BackoffStrategy = DEFAULT_RETRY_STRATEGY
+
         private var baseUrl = Constants.TEST_URL
         private var client: OkHttpClient = OkHttpClient().newBuilder().build()
         private var encodePayload = false
         private var logTraffic = false
+
+        fun webSocketFactory(factory: WebSocket.Factory): Builder = apply { webSocketFactory = factory }
+
+        fun lifecycle(lifecycle: Lifecycle): Builder = apply { this.lifecycle = lifecycle }
+
+
+        fun backoffStrategy(backoffStrategy: BackoffStrategy): Builder =
+            apply { this.backoffStrategy = backoffStrategy }
 
         fun baseUrl(baseUrl: String): Builder {
             this.baseUrl = baseUrl
@@ -151,11 +167,27 @@ class Achilles internal constructor(
             return this
         }
 
+        private fun createServiceFactory(): Service.Factory = Service.Factory(
+            createConnectionFactory(),
+            createServiceMethodExecutorFactory()
+        )
+
+        private fun createConnectionFactory(): Connection.Factory =
+            Connection.Factory(lifecycle, GlobalScope, checkNotNull(webSocketFactory), backoffStrategy)
+
         fun build() = Achilles(
             baseUrl,
             client,
             encodePayload,
             logTraffic
         )
+
+        companion object {
+            private val DEFAULT_LIFECYCLE = DefaultLifecycle()
+            private val RETRY_BASE_DURATION = 1000L
+            private val RETRY_MAX_DURATION = 10000L
+            private val DEFAULT_RETRY_STRATEGY =
+                ExponentialBackoffStrategy(RETRY_BASE_DURATION, RETRY_MAX_DURATION)
+        }
     }
 }

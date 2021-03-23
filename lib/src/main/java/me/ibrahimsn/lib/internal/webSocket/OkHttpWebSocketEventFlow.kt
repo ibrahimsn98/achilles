@@ -1,25 +1,25 @@
 package me.ibrahimsn.lib.internal.webSocket
 
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.cancel
-import kotlinx.coroutines.launch
 import me.ibrahimsn.lib.internal.Message
 import me.ibrahimsn.lib.internal.core.ShutdownReason
 import okhttp3.Response
 import okhttp3.WebSocketListener
 import okio.ByteString
 
-internal class OkHttpWebSocketEventFlow(
-    private val scope: CoroutineScope
-) : WebSocketListener() {
+internal class OkHttpWebSocketEventFlow: WebSocketListener() {
+
+    private val job = SupervisorJob()
+
+    private val scope = CoroutineScope(job + Dispatchers.IO)
 
     private val flow = MutableSharedFlow<WebSocket.Event>()
 
     fun terminate() {
-        flow.cancel()
+        scope.cancel()
     }
 
     fun observe(): SharedFlow<WebSocket.Event> = flow.asSharedFlow()

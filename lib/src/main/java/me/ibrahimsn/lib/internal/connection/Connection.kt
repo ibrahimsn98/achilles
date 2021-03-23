@@ -2,14 +2,13 @@ package me.ibrahimsn.lib.internal.connection
 
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import me.ibrahimsn.lib.internal.WebSocket
+import me.ibrahimsn.lib.internal.Message
 import me.ibrahimsn.lib.internal.lifecycle.Lifecycle
 import me.ibrahimsn.lib.internal.retry.BackoffStrategy
-import me.ibrahimsn.lib.internal.session.Session
 import me.ibrahimsn.lib.internal.state.StateMachine
+import me.ibrahimsn.lib.internal.webSocket.WebSocket
 
 internal class Connection(
     private val lifecycle: Lifecycle,
@@ -41,6 +40,13 @@ internal class Connection(
             is ConnectionState.Destroyed -> {
 
             }
+        }
+    }
+
+    fun send(message: Message): Boolean {
+        return when (val state = stateMachine.currentState) {
+            is ConnectionState.Connected -> state.session.webSocket.send(message)
+            else -> false
         }
     }
 

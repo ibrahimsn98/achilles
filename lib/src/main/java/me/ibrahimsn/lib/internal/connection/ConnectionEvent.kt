@@ -1,6 +1,5 @@
 package me.ibrahimsn.lib.internal.connection
 
-import me.ibrahimsn.lib.internal.WebSocket
 import me.ibrahimsn.lib.internal.lifecycle.Lifecycle
 import me.ibrahimsn.lib.internal.state.Event
 import me.ibrahimsn.lib.internal.state.State

@@ -1,6 +1,5 @@
 package me.ibrahimsn.lib.internal.webSocket
 
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import me.ibrahimsn.lib.internal.Message
 import me.ibrahimsn.lib.internal.core.ShutdownReason
@@ -29,6 +28,6 @@ interface WebSocket {
     }
 
     interface Factory {
-        fun create(scope: CoroutineScope): WebSocket
+        fun create(): WebSocket
     }
 }

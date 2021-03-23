@@ -1,26 +1,18 @@
 package me.ibrahimsn.lib.internal.webSocket
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onSubscription
 import me.ibrahimsn.lib.internal.Message
 import me.ibrahimsn.lib.internal.core.ShutdownReason
 import okhttp3.WebSocketListener
-import okio.ByteString
 import okio.ByteString.Companion.toByteString
 
 class OkHttpWebSocket internal constructor(
     private val okHttpWebSocketEventFlow: OkHttpWebSocketEventFlow,
     private val connectionEstablisher: ConnectionEstablisher
 ) : WebSocket {
-
-    private val job = SupervisorJob()
-
-    private val scope = CoroutineScope(job + Dispatchers.IO)
 
     private var webSocket: okhttp3.WebSocket? = null
 
@@ -61,7 +53,7 @@ class OkHttpWebSocket internal constructor(
     @Synchronized
     private fun handleConnectionShutdown() {
         webSocket = null
-        okHttpWebSocketEventObserver.terminate()
+        okHttpWebSocketEventFlow.terminate()
     }
 
     interface ConnectionEstablisher {
@@ -71,7 +63,7 @@ class OkHttpWebSocket internal constructor(
     class Factory(
         private val connectionEstablisher: ConnectionEstablisher
     ) : WebSocket.Factory {
-        override fun create(scope: CoroutineScope): WebSocket =
-            OkHttpWebSocket(OkHttpWebSocketEventFlow(scope), connectionEstablisher)
+        override fun create(): WebSocket =
+            OkHttpWebSocket(OkHttpWebSocketEventFlow(), connectionEstablisher)
     }
 }
