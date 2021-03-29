@@ -2,8 +2,10 @@ package me.ibrahimsn.lib.internal.connection
 
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import me.ibrahimsn.lib.Event
 import me.ibrahimsn.lib.internal.Message
 import me.ibrahimsn.lib.internal.lifecycle.Lifecycle
 import me.ibrahimsn.lib.internal.retry.BackoffStrategy
@@ -17,7 +19,7 @@ internal class Connection(
     private val backoffStrategy: BackoffStrategy,
 ) {
 
-    private val stateMachine = StateMachine<ConnectionEvent, ConnectionState>(
+    val stateMachine = StateMachine<ConnectionEvent, ConnectionState>(
         ConnectionState.Disconnected,
         scope,
     ) { event, state ->
@@ -58,6 +60,7 @@ internal class Connection(
         }
     }
 
+    fun observeEvent(): Flow<Event> =
 
     class Factory(
         private val lifecycle: Lifecycle,

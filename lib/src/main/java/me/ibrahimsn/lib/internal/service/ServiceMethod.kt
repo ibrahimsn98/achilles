@@ -1,7 +1,12 @@
 package me.ibrahimsn.lib.internal.service
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
 import me.ibrahimsn.lib.internal.adapter.MessageAdapter
+import me.ibrahimsn.lib.internal.adapter.MessageAdapterResolver
 import me.ibrahimsn.lib.internal.connection.Connection
+import me.ibrahimsn.lib.internal.connection.ConnectionState
+import me.ibrahimsn.lib.internal.state.observer.StateObserver
 import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
@@ -42,12 +47,18 @@ internal sealed class ServiceMethod {
     class Receive(
         internal val eventMapper: EventMapper<*>,
         private val connection: Connection,
-        private val scheduler: Scheduler,
-        private val streamAdapter: StreamAdapter<Any, Any>
     ) : ServiceMethod() {
 
         fun execute(): Any {
-            val stream = Flowable.defer { connection.observeEvent() }
+            connection.stateMachine.observeState(object: StateObserver<ConnectionState> {
+                override fun observe(stateFlow: Flow<ConnectionState>) {
+                    return stateFlow.flatMapLatest {
+                        eventMapper.mapToData(it)
+                    }
+                }
+            })
+
+            val stream = Flowable.defer {  }
                 .observeOn(scheduler)
                 .flatMapMaybe(eventMapper::mapToData)
                 .toStream()
@@ -55,7 +66,6 @@ internal sealed class ServiceMethod {
         }
 
         class Factory(
-            private val scheduler: Scheduler,
             private val eventMapperFactory: EventMapper.Factory,
             private val streamAdapterResolver: StreamAdapterResolver
         ) : ServiceMethod.Factory {
